@@ -353,12 +353,33 @@ if(!phone){phone=(d.whatsapp||"").trim().replace(/[\s\-()]/g,"");if(phone&&!phon
 d.phone=phone;d.apellido=((d.apellido_paterno||"")+" "+(d.apellido_materno||"")).trim();
 var so=f.pais&&f.pais.options[f.pais.selectedIndex];d.pais=(so&&so.text)||d.pais||"";d.pais_iso=((so&&so.dataset.iso)||"").toUpperCase();
 d.curso=RM_CFG.id;d.folleto=RM_CFG.folleto;d.privacidad=true;RM_LEAD=d;
-const b=f.querySelector('button[type=submit]');const txt=b.textContent;b.textContent="ENVIANDO CODIGO...";b.disabled=true;let res;
+const b=f.querySelector('button[type=submit]');const txt=b.textContent;b.textContent="ENVIANDO...";b.disabled=true;let res;
 try{res=await rmPost(Object.assign({action:"start"},d));}catch(_){res={};}
 if(res&&res.need_corporate){b.textContent=txt;b.disabled=false;rmCorporativo(res.contacto||{});return false;}
-if(res&&res.ok){f.style.display="none";rmShowCode(d.email);}
-else{b.textContent=txt;b.disabled=false;alert((res&&res.error)||"No pudimos enviar el codigo. Escribenos a growth@riskmathics.com");}
+if(res&&res.ok){f.style.display="none";rmGracias(res);}
+else{b.textContent=txt;b.disabled=false;alert((res&&res.error)||"No pudimos registrar tus datos. Escribenos a growth@riskmathics.com o por WhatsApp al +52 55 1901 5763");}
 return false;}
+/* Confirmacion inmediata: el prospecto nunca espera un correo (3-sep-2026). */
+function rmGracias(res){
+  var c=(res&&res.contacto)||{};
+  var wa=c.whatsapp||"https://wa.me/525519015763";
+  var waTxt=c.whatsapp_texto||"+52 55 1901 5763";
+  var mail=c.correo||"growth@riskmathics.com";
+  var box=document.getElementById('rm-thanks');
+  if(!box){box=document.createElement('div');box.id='rm-thanks';var v=document.getElementById('rm-verify');if(v&&v.parentNode)v.parentNode.insertBefore(box,v.nextSibling);}
+  box.innerHTML='<div style="padding:26px 24px;border-radius:8px;border:1px solid rgba(128,128,128,.35)">'+
+    '<p style="margin:0 0 10px;font-family:\'Poppins\',Arial,sans-serif;font-weight:700;font-size:18px">Listo, recibimos tus datos.</p>'+
+    '<p style="margin:0 0 18px;font-family:\'Lora\',Georgia,serif;font-size:15.5px;line-height:1.65">Un asesor te contacta hoy mismo'+
+    (res&&res.correo_enviado?' y te mandamos la informacion a tu correo':'')+'. Si prefieres, escribenos directo ahora:</p>'+
+    '<div style="display:grid;gap:10px">'+
+      '<a href="'+wa+'" target="_blank" rel="noopener" style="background:#25D366;color:#fff;font-weight:600;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:14px;border-radius:4px;text-decoration:none;text-align:center;font-family:\'Poppins\',Arial,sans-serif">WhatsApp '+waTxt+'</a>'+
+      '<a href="mailto:'+mail+'?subject=Informes%20'+encodeURIComponent(RM_CFG.id)+'" style="border:1.5px solid currentColor;font-weight:600;font-size:12.5px;letter-spacing:1px;text-transform:uppercase;padding:13px;border-radius:4px;text-decoration:none;text-align:center;font-family:\'Poppins\',Arial,sans-serif">'+mail+'</a>'+
+      '<a href="tel:+525555363597" style="border:1.5px solid currentColor;font-weight:600;font-size:12.5px;letter-spacing:1px;text-transform:uppercase;padding:13px;border-radius:4px;text-decoration:none;text-align:center;font-family:\'Poppins\',Arial,sans-serif">+52 55 5536 3597 ext. 2203</a>'+
+    '</div></div>';
+  box.style.display="block";
+  try{box.scrollIntoView({behavior:"smooth",block:"center"});}catch(_){box.scrollIntoView();}
+  try{todoContraste&&todoContraste();}catch(_){}
+}
 function rmCorporativo(c){var box=document.getElementById('rm-verify');
 box.innerHTML='<div style="border:1px solid #f0d9a8;background:#fffaf0;padding:22px;border-radius:6px;">'+
 '<p style="margin:0 0 14px;font-size:15px;color:#1b2430;font-family:\'Lora\',Georgia,serif;line-height:1.6;">Para enviarte el temario necesitamos tu <b>correo institucional o de empresa</b>.</p>'+
