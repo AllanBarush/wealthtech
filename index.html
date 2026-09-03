@@ -100,18 +100,61 @@ ul.dir{list-style:none;margin-top:24px}ul.dir li{padding:10px 0 10px 26px;positi
 .pwm-iada small{font-weight:500;font-size:8px;letter-spacing:.16em;display:block}
 @media(max-width:560px){.pwm-cont{padding-top:120px}.pwm-oro img{height:34px}}
 </style>
-<style id="upd-form-sep26">
-/* Legibilidad del formulario: el conversor de identidad dejo texto y fondo del mismo color (2-sep-2026) */
-#rm-enroll .rm-in,#rm-enroll input,#rm-enroll select,#rm-enroll textarea{color:#fff !important;-webkit-text-fill-color:#fff !important}
-#rm-enroll .rm-in::placeholder,#rm-enroll input::placeholder{color:#A4A7AA !important;opacity:1}
-#rm-enroll option{color:#111 !important;background:#fff !important}
-#rm-enroll input:-webkit-autofill{-webkit-text-fill-color:#fff !important;-webkit-box-shadow:0 0 0 60px #101820 inset !important;caret-color:#fff}
-#rm-enroll label,#rm-enroll label span,#rm-enroll .rm-lab,#rm-enroll p,#rm-enroll h2{color:#fff !important}
-#rm-enroll label a{color:#fff !important}
-#rm-enroll a[style*="border"]{color:#fff !important}
-#rm-verify,#rm-verify p,#rm-verify div,#rm-verify input,#rm-thanks{color:#fff !important}
-#rm-verify input{-webkit-text-fill-color:#fff !important}
-</style>
+<script id="upd-form-sep26">
+/* Contraste del formulario: el conversor de identidad dejo texto y fondo del mismo color.
+   Se mide el fondo pintado real y se elige el color legible. 2-sep-2026 v2. */
+(function(){
+  function lum(c){var m=String(c).match(/[\d.]+/g);if(!m||m.length<3)return null;
+    var f=function(x){x=x/255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4)};
+    return 0.2126*f(+m[0])+0.7152*f(+m[1])+0.0722*f(+m[2]);}
+  function ratio(a,b){var x=lum(a),y=lum(b);if(x===null||y===null)return 21;
+    return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+  function fondo(el){var e=el;
+    while(e&&e!==document.documentElement){var s=getComputedStyle(e);
+      if(s.backgroundImage&&s.backgroundImage!=="none"){
+        var g=s.backgroundImage.match(/rgba?\([^)]*\)/g);
+        if(g&&g.length){for(var i=0;i<g.length;i++){var l=lum(g[i]);if(l!==null)return g[i];}}}
+      var c=s.backgroundColor;
+      if(c&&c!=="rgba(0, 0, 0, 0)"&&c!=="transparent"){var a=String(c).match(/[\d.]+/g);
+        if(!a||a.length<4||parseFloat(a[3])>0.5)return c;}
+      e=e.parentElement;}
+    return "rgb(255, 255, 255)";}
+  function pinta(raiz){
+    if(!raiz)return;
+    var campos=raiz.querySelectorAll("input,select,textarea");
+    for(var i=0;i<campos.length;i++){
+      var el=campos[i];
+      if(el.type==="checkbox"||el.type==="radio"||el.type==="hidden")continue;
+      var bg=fondo(el), claro=lum(bg)>0.45;
+      var col=claro?"#1b2430":"#FFFFFF";
+      if(ratio(getComputedStyle(el).color,bg)>=4.5)continue;
+      el.style.setProperty("color",col,"important");
+      el.style.setProperty("-webkit-text-fill-color",col,"important");
+      el.style.setProperty("caret-color",col,"important");
+    }
+    var textos=raiz.querySelectorAll("label,label span,p,h2,h3,.rm-lab,a");
+    for(var j=0;j<textos.length;j++){
+      var t=textos[j], b2=fondo(t);
+      if(ratio(getComputedStyle(t).color,b2)>=4.5)continue;
+      t.style.setProperty("color",lum(b2)>0.45?"#1b2430":"#FFFFFF","important");
+    }
+  }
+  function todo(){
+    pinta(document.getElementById("rm-enroll"));
+    pinta(document.getElementById("rm-verify"));
+    pinta(document.getElementById("rm-thanks"));
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",todo);
+  else todo();
+  window.addEventListener("load",todo);
+  /* el bloque de verificacion y el de gracias se crean despues: re-pintar cuando aparezcan */
+  try{
+    var obs=new MutationObserver(function(){todo();});
+    var raiz=document.getElementById("rm-enroll");
+    if(raiz)obs.observe(raiz,{childList:true,subtree:true,attributes:true,attributeFilter:["style"]});
+  }catch(_){}
+})();
+</script>
 </head><body>
 <header class="hero pwm-hero">
  <div class="pwm-foto" style="background-image:url('portada.jpg')"></div>
