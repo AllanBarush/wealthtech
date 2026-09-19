@@ -470,21 +470,19 @@ if(res&&res.need_corporate){rmCorporativo(res,out);return false;}
 if(!(res&&res.ok)){alert((res&&res.error)||("No pudimos registrar tus datos. Escríbenos a "+rmMail()+" o por WhatsApp al +52 55 1901 5763"));return false;}
 f.style.display="none";out.style.display="block";
 out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Listo, recibimos tus datos.</p><p style="'+RM_P+'">Buscando horarios disponibles con desarrollo de negocio...</p></div>';
-/* Se piden huecos al asesor asignado y al otro en paralelo: si el asignado tiene la semana llena, se completa con el otro (Allan: Tomas o Alexander). */
-var casoA=res.agenda_caso||"incompany",casoB=casoA==="incompany"?"incompany_tm":"incompany";var h={},h2={};
-try{var par=await Promise.all([rmAgenda({accion:"huecos",caso:casoA,cuantos:3}).catch(function(){return {};}),rmAgenda({accion:"huecos",caso:casoB,cuantos:3}).catch(function(){return {};})]);h=par[0]||{};h2=par[1]||{};}catch(_){}
-var ops=((h&&h.opciones)||[]).map(function(o){o.caso=casoA;return o;});
-if(ops.length<3){((h2&&h2.opciones)||[]).forEach(function(o){if(ops.length<3&&!ops.some(function(x){return x.inicia===o.inicia;})){o.caso=casoB;ops.push(o);}});}
-ops.sort(function(a,b){return a.inicia<b.inicia?-1:1;});
+/* Huecos de TODO el equipo de ventas (Allan: "los Calendlys de todos"): la persona asignada al programa va primero y los dias se reparten entre personas. */
+var casoA=res.agenda_caso||"incompany",casos=(res.agenda_casos&&res.agenda_casos.length)?res.agenda_casos:[casoA];var h={};
+try{h=await rmAgenda({accion:"huecos_todos",casos:casos,cuantos:3});}catch(_){h={};}
+var ops=(h&&h.opciones)||[];
 if(!ops.length){out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Listo, recibimos tus datos.</p><p style="'+RM_P+'">Desarrollo de negocio te contacta hoy mismo para agendar la reunión. Si prefieres, escríbenos directo:</p>'+rmContactos(res.contacto,"Programa in-company: "+rmPrograma())+'</div>';rmMostrar(out);return false;}
 RM_IC.caso=casoA;RM_IC.contacto=res.contacto;
-out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Elige tu horario.</p><p style="'+RM_P+'">20 minutos por Google Meet con desarrollo de negocio (hora de la Ciudad de México). Te llega la invitación a <b>'+rmEsc(d.email)+'</b>.</p><div style="display:grid;gap:10px">'+
-ops.map(function(o){return '<button type="button" onclick="rmAgendar(\''+o.inicia+'\',\''+o.termina+'\',\''+o.caso+'\')" style="'+RM_BTN+'border:1.5px solid currentColor;background:transparent;color:inherit;width:100%">'+rmEsc(o.humano||o.inicia)+'</button>';}).join("")+
+out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Elige tu horario.</p><p style="'+RM_P+'">20 minutos por Zoom con desarrollo de negocio (hora de la Ciudad de México). Te llega la invitación con la liga a <b>'+rmEsc(d.email)+'</b>.</p><div style="display:grid;gap:10px">'+
+ops.map(function(o){return '<button type="button" onclick="rmAgendar(\''+o.inicia+'\',\''+o.termina+'\',\''+(o.caso||casoA)+'\')" style="'+RM_BTN+'border:1.5px solid currentColor;background:transparent;color:inherit;width:100%">'+rmEsc(o.humano||o.inicia)+(o.persona?' · '+rmEsc(o.persona):'')+'</button>';}).join("")+
 '</div><p id="rm-ic-msg" style="font-size:12px;margin:12px 0 0;font-family:\'Lora\',Georgia,serif;min-height:16px"></p></div>';
 rmMostrar(out);return false;}
 async function rmAgendar(inicia,termina,caso){var out=document.getElementById('rm-incompany-out'),m=document.getElementById('rm-ic-msg');if(m)m.textContent="Agendando...";var d=RM_IC||{};var r={};if(caso)d.caso=caso;
 try{r=await rmAgenda({accion:"agendar",caso:d.caso||"incompany",inicia:inicia,termina:termina,cliente_nombre:((d.nombre||"")+" "+(d.apellido||"")).trim(),cliente_email:d.email,cliente_empresa:d.empresa,cliente_puesto:d.puesto,cliente_tel:d.telefono,programa:rmPrograma(),participantes:d.participantes});}catch(_){r={};}
-if(r&&r.agendado){out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Reunión agendada.</p><p style="'+RM_P+'">'+rmEsc(r.decir_al_cliente||("Te enviamos la invitación a "+d.email+". Quedamos el "+(r.cuando||"")+" (hora de la Ciudad de México), 20 minutos por Google Meet."))+'</p>'+(r.meet?'<a href="'+r.meet+'" target="_blank" rel="noopener" style="'+RM_BTN+'border:1.5px solid currentColor;color:inherit">Liga de Google Meet</a>':'')+'</div>';rmMostrar(out);return;}
+if(r&&r.agendado){out.innerHTML='<div style="'+RM_CAJA+'"><p style="'+RM_H+'">Reunión agendada'+(r.persona?' con '+rmEsc(r.persona):'')+'.</p><p style="'+RM_P+'">'+rmEsc(r.decir_al_cliente||("Te enviamos la invitación a "+d.email+". Quedamos el "+(r.cuando||"")+" (hora de la Ciudad de México), 20 minutos por "+(r.plataforma||"Zoom")+"."))+'</p>'+(r.meet?'<a href="'+r.meet+'" target="_blank" rel="noopener" style="'+RM_BTN+'border:1.5px solid currentColor;color:inherit">Liga de '+rmEsc(r.plataforma||"Zoom")+'</a>':'')+'</div>';rmMostrar(out);return;}
 if(r&&r.motivo==="horario_ocupado"&&r.nuevas&&r.nuevas.length){if(m)m.textContent="Ese horario se acaba de ocupar. Elige otro:";var g=out.querySelector('div[style*="grid"]');if(g)g.innerHTML=r.nuevas.map(function(o){return '<button type="button" onclick="rmAgendar(\''+o.inicia+'\',\''+o.termina+'\')" style="'+RM_BTN+'border:1.5px solid currentColor;background:transparent;color:inherit;width:100%">'+rmEsc(o.humano||o.inicia)+'</button>';}).join("");return;}
 if(m)m.textContent="No pudimos agendar en automático; desarrollo de negocio te contacta hoy mismo para confirmar la reunión.";}
 </script>
