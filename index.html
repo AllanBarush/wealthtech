@@ -401,9 +401,12 @@ function rmEsc(s){return String(s||"").replace(/[&<>"']/g,function(c){return {"&
 function rmCaja(id,despuesDe){var box=document.getElementById(id);if(!box){box=document.createElement('div');box.id=id;var ref=despuesDe||document.getElementById('rm-lead')||document.querySelector('form');if(ref&&ref.parentNode)ref.parentNode.insertBefore(box,ref.nextSibling);else document.body.appendChild(box);}box.style.display="block";return box;}
 function rmContactos(c,asunto,wa,mailto){c=c||{};var waU=wa||c.whatsapp||"https://wa.me/525519015763",waTxt=c.whatsapp_texto||"+52 55 1901 5763",mail=rmMail(c);
 return '<div style="display:grid;gap:10px">'+
-'<a href="'+waU+'" target="_blank" rel="noopener" data-rm-directo="1" style="'+RM_BTN+'background:#25D366;color:#0b0715">WhatsApp '+waTxt+'</a>'+
+/* Las ligas de WhatsApp y telefono de estas cajas SI pasan por las tres preguntas (Allan, 19-sep): es justo donde
+   le pedimos nombre, puesto, institucion y por que le interesa, y el dialogo lo captura ordenado en vez de pedirselo
+   por escrito. Solo las ligas finales del propio dialogo (ya con referencia) van directas. */
+'<a href="'+waU+'" target="_blank" rel="noopener" style="'+RM_BTN+'background:#25D366;color:#0b0715">WhatsApp '+waTxt+'</a>'+
 '<a href="'+(mailto||("mailto:"+mail+"?subject="+encodeURIComponent(asunto||("Informes: "+rmPrograma()))))+'" style="'+RM_BTN+'border:1.5px solid currentColor;color:inherit">'+mail+'</a>'+
-'<a href="tel:+525555363597" data-rm-directo="1" style="'+RM_BTN+'border:1.5px solid currentColor;color:inherit">+52 55 5536 3597 ext. 2203</a></div>';}
+'<a href="tel:+525555363597" style="'+RM_BTN+'border:1.5px solid currentColor;color:inherit">+52 55 5536 3597 ext. 2203</a></div>';}
 function rmMostrar(box){try{box.scrollIntoView({behavior:"smooth",block:"center"});}catch(_){box.scrollIntoView();}try{todoContraste&&todoContraste();}catch(_){}}
 async function rmSubmit(e){e.preventDefault();const f=e.target,d=Object.fromEntries(new FormData(f));
 if(!f.privacidad||!f.privacidad.checked){alert("Debes aceptar el Aviso de Privacidad para continuar.");return false;}
